@@ -2,10 +2,14 @@
 # 
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
-RESOURCE_GROUP=rg-bicep-test2
-NAME=testbicep
-DEPLOYMENT_NAME=main-bicep-deployment
+RESOURCE_GROUP=rg-test
+NAME=amlworkspace
+DEPLOYMENT_NAME=aml-deployment
 LOCATION=southcentralus
+
+CI_NAME=aml-ci
+
+WS_NAME=$(shell az deployment group show -g ${RG_NAME} --name ${DEPLOYMENT_NAME} -o jsonc --query "properties.outputs.workspaceName.value" -o tsv)
 
 create-group:
 	az group create -n ${RESOURCE_GROUP} -l ${LOCATION}
@@ -38,9 +42,9 @@ deploy-ci:
 		--template-file components/compute-instance.bicep \
 		--parameters tags=@tags.json \
 		--parameters vnet=@vnet_details.json \
-		--parameters workspaceName=ws-testbicep-hj2l \
-					 ciName=erik-1123b \
-					 assignedUserId='b953e707-e89d-41b2-9b4f-7fca80ce7319' \
+		--parameters workspaceName=${WS_NAME} \
+					 ciName=${CI_NAME} \
+					 assignedUserId='$(shell az ad signed-in-user show --query objectId -o tsv)' \
 					 vmSkuName=Standard_DS3_v2 \
 					 sshPublicKey='$(shell cat ~/.ssh/id_nbvm_rsa.pub)'
 
