@@ -27,9 +27,6 @@ param storageSkuName string = 'Standard_LRS'
 @description('The tags to apply to the container registry')
 param tags object = {}
 
-var privateLinkUri = 'privatelink.blob.${environment().suffixes.storage}'
-var groupName = 'blob'
-
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   kind: 'StorageV2'
   location: resourceGroup().location
@@ -51,7 +48,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   }
 }
 
-module privateLink 'private-link.bicep' = {
+module privateLink 'storage-private-link.bicep' = {
   name: '${deployment().name}-PrivateLink'
   params:{
     baseResource: {
@@ -60,10 +57,16 @@ module privateLink 'private-link.bicep' = {
     }
     tags: tags
     vnet: vnet
-    privateLinkUri: [
-      privateLinkUri
+    groups: [
+      {
+        name: 'blob'
+        uri: 'privatelink.blob.${environment().suffixes.storage}'
+      }
+      {
+        name: 'file'
+        uri: 'privatelink.file.${environment().suffixes.storage}'
+      }
     ]
-    groupName: groupName
   }
 }
 
